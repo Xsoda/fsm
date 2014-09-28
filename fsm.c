@@ -11,7 +11,7 @@ int fsm_emit_event(fsm_context_t *ctx, const char *event_name)
 
    while (event) {
       if (event->from == ctx->current) {
-         if (strcmp(event_name, event->ename) == 0) {
+         if (strcmp(event_name, event->event_name) == 0) {
             break;
          }
       }
@@ -20,7 +20,7 @@ int fsm_emit_event(fsm_context_t *ctx, const char *event_name)
    }
 
    if (event == NULL) {
-      fprintf(stderr, "ERROR: cannot emit event `%s` at current state `%s`\n", event_name, ctx->current->sname);
+      fprintf(stderr, "ERROR: cannot emit event `%s` at current state `%s`\n", event_name, ctx->current->state_name);
       return -1;
    }
 
@@ -65,24 +65,24 @@ int fsm_emit_event(fsm_context_t *ctx, const char *event_name)
    return 0;
 }
 
-int fsm_add_event(fsm_context_t *ctx, fsm_event_t *e)
+int fsm_add_event(fsm_context_t *ctx, fsm_event_t *event)
 {
-   if (e && ctx) {
-      assert(e->next == e);
-      e->next = ctx->events;
-      ctx->events = e;
+   if (event && ctx) {
+      assert(event->next == event);
+      event->next = ctx->events;
+      ctx->events = event;
       return 0;
    }
 
    return -1;
 }
 
-int fsm_add_state(fsm_context_t *ctx, fsm_state_t *s)
+int fsm_add_state(fsm_context_t *ctx, fsm_state_t *state)
 {
-   if (s && ctx) {
-      assert(s->next == s);
-      s->next = ctx->states;
-      ctx->states = s;
+   if (state && ctx) {
+      assert(state->next == state);
+      state->next = ctx->states;
+      ctx->states = state;
       return 0;
    }
 
@@ -96,7 +96,7 @@ void fsm_print(fsm_context_t *ctx)
 
    while (event) {
       fprintf(stdout, "  \"%s\" -> \"%s\" [label = \"%s\"];\n",
-              event->from->sname, event->to->sname, event->ename);
+              event->from->state_name, event->to->state_name, event->event_name);
       event = event->next;
    }
 
@@ -141,7 +141,7 @@ void fsm_destory(fsm_context_t *ctx)
    free(ctx);
 }
 
-fsm_state_t * fsm_create_state(const char *name, fsm_state_cb enter, fsm_state_cb leave, void *data)
+fsm_state_t * fsm_create_state(const char *state_name, fsm_state_cb enter, fsm_state_cb leave, void *data)
 {
    fsm_state_t *state;
 
@@ -150,7 +150,7 @@ fsm_state_t * fsm_create_state(const char *name, fsm_state_cb enter, fsm_state_c
    }
 
    memset(state, 0, sizeof(fsm_state_t));
-   state->sname = name;
+   state->state_name = state_name;
    state->enter = enter;
    state->leave = leave;
    state->data = data;
@@ -158,7 +158,7 @@ fsm_state_t * fsm_create_state(const char *name, fsm_state_cb enter, fsm_state_c
    return state;
 }
 
-fsm_event_t * fsm_create_event(const char *name,
+fsm_event_t * fsm_create_event(const char *event_name,
                                fsm_event_cb before, fsm_event_cb after,
                                fsm_state_t *from, fsm_state_t *to,
                                void *data)
@@ -169,7 +169,7 @@ fsm_event_t * fsm_create_event(const char *name,
       return NULL;
    }
 
-   event->ename = name;
+   event->event_name = event_name;
    event->before = before;
    event->after = after;
    event->from = from;
@@ -179,24 +179,67 @@ fsm_event_t * fsm_create_event(const char *name,
    return event;
 }
 
+bool fsm_is(fsm_context_t *ctx, const char *state_name)
+{
+   if (ctx && ctx->current) {
+      if (strcmp(ctx->current->state_name, state_name) == 0) {
+         return true;
+      }
+   }
+
+   return false;
+}
+
+bool fsm_can(fsm_context_t *ctx, const char *event_name)
+{
+   fsm_event_t *event;
+
+   if (ctx) {
+      event = ctx->events;
+
+      while (event) {
+         if (ctx->current == event->from)
+            if (strcmp(event->event_name, event_name) == NULL) {
+               return true;
+            }
+      }
+   }
+
+   return false;
+}
+
+bool fsm_cannot(fsm_context_t *ctx, const char *event_name)
+{
+   return !fsm_can(ctx, event_name);
+}
+
+const char *fsm_current(fsm_context_t *ctx)
+{
+   if (ctx && ctx->current) {
+      return ctx->current->state_name;
+   }
+
+   return NULL;
+}
+
 /** #define __FSM_TEST__ /**/
 #ifdef __FSM_TEST__
 #include <crtdbg.h>
 void enter(fsm_context_t *ctx, fsm_state_t *state)
 {
-   fprintf(stdout, "fsm: enter state `%s`\n", state->sname);
+   fprintf(stdout, "fsm: enter state `%s`\n", state->state_name);
 }
 void before(fsm_context_t *ctx, fsm_event_t *event)
 {
-   fprintf(stdout, "fsm: before emit event `%s`\n", event->ename);
+   fprintf(stdout, "fsm: before emit event `%s`\n", event->event_name);
 }
 void after(fsm_context_t *ctx, fsm_event_t *event)
 {
-   fprintf(stdout, "fsm: after emit event `%s`\n", event->ename);
+   fprintf(stdout, "fsm: after emit event `%s`\n", event->event_name);
 }
 void leave(fsm_context_t *ctx, fsm_state_t *state)
 {
-   fprintf(stdout, "fsm: leave state `%s`\n", state->sname);
+   fprintf(stdout, "fsm: leave state `%s`\n", state->state_name);
 }
 void enter_green(fsm_context_t *ctx, fsm_state_t *green)
 {

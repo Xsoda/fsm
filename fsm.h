@@ -3,6 +3,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _fsm_state fsm_state_t;
 typedef struct _fsm_event fsm_event_t;
 typedef struct _fsm_context fsm_context_t;
@@ -40,8 +44,8 @@ struct _fsm_context {
 };
 
 int fsm_emit_event(fsm_context_t *ctx, const char *event_name);
-int fsm_add_event(fsm_context_t *ctx, fsm_event_t *e);
-int fsm_add_state(fsm_context_t *ctx, fsm_state_t *e);
+int fsm_add_event(fsm_context_t *ctx, fsm_event_t *event);
+int fsm_add_state(fsm_context_t *ctx, fsm_state_t *event);
 void fsm_print(fsm_context_t *ctx);
 fsm_context_t *fsm_create(fsm_state_t *initial, void *data);
 void fsm_destory(fsm_context_t *ctx);
@@ -54,5 +58,12 @@ bool fsm_is(fsm_context_t *fsm, const char *state_name);
 bool fsm_can(fsm_context_t *ctx, const char *event_name);
 bool fsm_cannot(fsm_context_t *ctx, const char *event_name);
 const char *fsm_current(fsm_context_t *ctx);
+fsm_state_t *fsm_find_state(fsm_context_t *ctx, const char *state_name);
+fsm_event_t *fsm_find_event(fsm_context_t *ctx, const char *event_name, fsm_state_t *from, fsm_state_t *to);
+int fsm_remove_event(fsm_context_t *ctx, fsm_event_t *event);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif  /* __FSM_H__ */

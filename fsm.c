@@ -199,7 +199,7 @@ bool fsm_can(fsm_context_t *ctx, const char *event_name)
 
       while (event) {
          if (ctx->current == event->from)
-            if (strcmp(event->event_name, event_name) == NULL) {
+            if (!strcmp(event->event_name, event_name)) {
                return true;
             }
       }
@@ -220,6 +220,63 @@ const char *fsm_current(fsm_context_t *ctx)
    }
 
    return NULL;
+}
+
+fsm_state_t *fsm_find_state(fsm_context_t *ctx, const char *state_name)
+{
+   fsm_state_t *state = ctx->states;
+
+   while (state) {
+      if (strcmp(state->state_name, state_name) == 0) {
+         break;
+      }
+
+      state = state->next;
+   }
+
+   return state;
+}
+
+fsm_event_t *fsm_find_event(fsm_context_t *ctx, const char *event_name, fsm_state_t *from, fsm_state_t *to)
+{
+   fsm_event_t *event = ctx->events;
+
+   while (event) {
+      if (event->from == from
+            && event->to == to
+            && !strcmp(event->event_name, event_name)) {
+         break;
+      }
+
+      event = event->next;
+   }
+
+   return event;
+}
+
+int fsm_remove_event(fsm_context_t *ctx, fsm_event_t *event)
+{
+   fsm_event_t *prev = ctx->events;
+
+   if (ctx->events == event && event) {
+      ctx->events = event->next;
+      event->next = NULL;
+      return 0;
+   }
+
+   while (prev) {
+      if (prev->next == event) {
+         break;
+      }
+   }
+
+   if (event && prev) {
+      prev->next = event->next;
+      event->next = NULL;
+      return 0;
+   }
+
+   return -1;
 }
 
 /** #define __FSM_TEST__ /**/

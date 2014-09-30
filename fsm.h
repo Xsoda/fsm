@@ -11,8 +11,8 @@ typedef struct _fsm_state fsm_state_t;
 typedef struct _fsm_event fsm_event_t;
 typedef struct _fsm_context fsm_context_t;
 
-typedef void(*fsm_state_cb)(fsm_context_t *ctx, fsm_state_t *s);
-typedef void(*fsm_event_cb)(fsm_context_t *ctx, fsm_event_t *e);
+typedef void(*fsm_state_cb)(fsm_context_t *ctx, fsm_state_t *state);
+typedef void(*fsm_event_cb)(fsm_context_t *ctx, fsm_event_t *event);
 
 struct _fsm_state {
    const char *state_name;

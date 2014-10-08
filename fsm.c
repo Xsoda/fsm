@@ -92,7 +92,7 @@ int fsm_add_state(fsm_context_t *ctx, fsm_state_t *state)
 void fsm_print(fsm_context_t *ctx)
 {
    fsm_event_t *event = ctx->events;
-   fsm_state_t *end;
+
    fprintf(stdout, "digraph fsm {\n");
 
    while (event) {

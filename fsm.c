@@ -92,27 +92,46 @@ int fsm_add_state(fsm_context_t *ctx, fsm_state_t *state)
 void fsm_print(fsm_context_t *ctx)
 {
    fsm_event_t *event = ctx->events;
+   fsm_state_t *state = ctx->states;
 
    fprintf(stdout, "digraph fsm {\n");
 
+   /* event emit color: green purple maroon */
    while (event) {
       fprintf(stdout, "  \"%s\" -> \"%s\" [label = \"%s\"",
               event->from->state_name, event->to->state_name, event->event_name);
 
-      if (!event->before && event->after) {
+      if (event->before && !event->after) {
          fprintf(stdout, ", color = green, fontcolor = green");
       }
 
-      if (event->before && !event->after) {
-         fprintf(stdout, ", color = blue, fontcolor = blue");
+      if (!event->before && event->after) {
+         fprintf(stdout, ", color = purple, fontcolor = purple");
       }
 
       if (event->before && event->after) {
-         fprintf(stdout, ", color = red, fontcolor = red");
+         fprintf(stdout, ", color = maroon, fontcolor = maroon");
       }
 
       fprintf(stdout, "];\n");
       event = event->next;
+   }
+
+   /* state enter/leave color: tomato orange orchid */
+   while (state) {
+      if (state->enter && !state->leave) {
+         fprintf(stdout, "\"%s\" [color = tomato, fontcolor = tomato];\n", state->state_name);
+      }
+
+      if (!state->enter && state->leave) {
+         fprintf(stdout, "\"%s\" [color = orange, fontcolor = orange];\n", state->state_name);
+      }
+
+      if (state->enter && state->leave) {
+         fprintf(stdout, "\"%s\" [color = orchid, fontcolor = orchid];\n", state->state_name);
+      }
+
+      state = state->next;
    }
 
    fprintf(stdout, "}\n");
